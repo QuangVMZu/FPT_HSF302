@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Trang chủ - Sony Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --primary:#0d6efd; --secondary:#6c757d;
+      --glass:rgba(255,255,255,.15); --border:rgba(255,255,255,.25);
+    }
+
+    /* --- LAYOUT FIX: sticky footer --- */
+    html, body { height: 100%; }
+    body.home-page{
+      min-height: 100vh; display: flex; flex-direction: column;
+      margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background:
+    radial-gradient(circle at 20% 30%, #dbeafe 0%, transparent 50%),
+    radial-gradient(circle at 90% 20%, #ffe4e6 0%, transparent 50%),
+    linear-gradient(120deg, #e0f2fe, #f9fafb 50%, #f3e8ff);
+    background-size: 300% 300%; animation: aurora 12s ease-in-out infinite;
+    overflow-x: hidden;
+    }
+    main.home-main{ flex: 1 0 auto; } /* đẩy footer xuống đáy */
+
+    @keyframes aurora{
+    0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+    }
+
+    /* --- SCOPED HEADER STYLES (không đè trang khác) --- */
+    .home-page .navbar{
+    background: rgba(255,255,255,.6)!important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(13,110,253,.1);
+    box-shadow: 0 5px 20px rgba(13,110,253,.05);
+    }
+    .home-page .navbar-brand{
+    font-weight: 800; letter-spacing:.5px; color: var(--primary)!important;
+    text-shadow: 0 0 8px rgba(13,110,253,.2); transition: transform .2s ease;
+    }
+    .home-page .navbar-brand:hover{ transform: scale(1.05); }
+    .home-page .nav-btn{
+    border-radius:999px; font-weight:600; transition: all .25s ease;
+    }
+    .home-page .nav-btn:hover{ transform: translateY(-2px); box-shadow:0 8px 18px rgba(13,110,253,.15); }
+
+    /* --- HERO --- */
+    .hero-section{ padding-top: 80px; text-align:center; position:relative; }
+    .hero-title{ font-weight:800; font-size:2.2rem; color:#0f172a; text-shadow:0 2px 6px rgba(13,110,253,.1); animation:fadeUp 1s ease; }
+    .hero-sub{ color:#6b7280; margin-top:10px; margin-bottom:30px; font-size:1.05rem; animation:fadeUp 1.3s ease; }
+    @keyframes fadeUp{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+
+    .role-pill{
+    display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:999px;
+    background:var(--glass); border:1px solid var(--border); font-weight:600; backdrop-filter:blur(10px);
+    box-shadow:0 0 15px rgba(13,110,253,.1); animation:pulseGlow 3s infinite ease-in-out;
+    }
+    .role-admin{color:#0d6efd} .role-staff{color:#00b894} .role-user{color:#8b5cf6}
+    @keyframes pulseGlow{0%,100%{box-shadow:0 0 10px rgba(13,110,253,.15)}50%{box-shadow:0 0 22px rgba(13,110,253,.35)}}
+
+    .dash-card{
+    background:rgba(255,255,255,.8); border:none; border-radius:20px; padding:30px 25px;
+    backdrop-filter: blur(10px); box-shadow:0 10px 30px rgba(13,110,253,.1);
+    transition: all .3s ease; transform:perspective(600px) rotateX(0deg);
+    }
+    .dash-card:hover{ transform: perspective(600px) rotateX(3deg) translateY(-5px); box-shadow:0 20px 60px rgba(13,110,253,.15); }
+    .card-icon{
+    width:64px;height:64px; display:flex; align-items:center; justify-content:center; border-radius:16px;
+    background:#eef5ff; color:var(--primary); font-size:32px; margin-bottom:16px; box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+    .card-title{font-weight:700; color:#111827; font-size:1.2rem;}
+    .card-desc{color:#6b7280; margin:10px 0 20px; min-height:44px;}
+    .btn-pill{ border-radius:999px; padding:10px 22px; font-weight:700; letter-spacing:.2px; transition: all .25s ease; }
+    .btn-pill:hover{ transform: translateY(-2px); box-shadow:0 10px 22px rgba(13,110,253,.25); }
+
+    /* --- FOOTER (không cần margin-top nữa vì đã có flex) --- */
+    .home-page footer{ margin-top: 0; }
+
+    /* --- BLOBS: fixed để không ảnh hưởng chiều cao layout --- */
+    .blob{
+    position: fixed; border-radius:50%; filter: blur(90px); opacity:.6;
+    animation: moveBlob 10s infinite alternate ease-in-out; z-index:-1;
+    }
+    .blob.blue{ background:rgba(13,110,253,.4); width:280px; height:280px; top:15%; left:10%; }
+    .blob.pink{ background:rgba(236,72,153,.4); width:240px; height:240px; bottom:10%; right:12%; animation-delay:3s; }
+    @keyframes moveBlob{0%{transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
+    </style>
+</head>
+
+<body class="home-page">
+<!-- Header fragment -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- blobs trang trí -->
+<div class="blob blue"></div>
+<div class="blob pink"></div>
+
+<!-- Nội dung chính -->
+<main class="home-main">
+    <section class="hero-section container">
+        <div class="d-flex justify-content-center mb-3">
+        <span class="role-pill"
+              th:classappend="${session.LoggedInAccount != null and session.LoggedInAccount.roleId == 1} ? ' role-admin' :
+                              (${session.LoggedInAccount != null and session.LoggedInAccount.roleId == 2} ? ' role-staff' : ' role-user')">
+          <span>👤</span>
+          <span th:text="${session.LoggedInAccount != null ?
+                          (session.LoggedInAccount.roleId == 1 ? 'Admin' :
+                           (session.LoggedInAccount.roleId == 2 ? 'Staff' : 'User')) : 'Guest'}">User</span>
+        </span>
+        </div>
+
+        <h2 class="hero-title">✨ Chào mừng đến với <span class="text-primary">Sony</span></h2>
+        <p class="hero-sub"
+           th:text="${session.LoggedInAccount != null and (session.LoggedInAccount.roleId == 1 or session.LoggedInAccount.roleId == 2)} ?
+                  'Bắt đầu quản lý hệ thống sản phẩm & danh mục chuyên nghiệp.' :
+                  'Khám phá danh sách sản phẩm và danh mục của Sony.'">
+            Bắt đầu quản lý hệ thống sản phẩm & danh mục chuyên nghiệp.
+        </p>
+
+        <div class="row g-4 pt-3">
+            <div class="col-md-6">
+                <div class="dash-card">
+                    <div class="card-icon">📦</div>
+                    <div class="card-title"
+                         th:text="${session.LoggedInAccount != null && (session.LoggedInAccount.roleId == 1 || session.LoggedInAccount.roleId == 2)} ?
+                          'Quản lý sản phẩm' : 'Sản phẩm'">Quản lý sản phẩm</div>
+                    <div class="card-desc"
+                         th:text="${session.LoggedInAccount != null && (session.LoggedInAccount.roleId == 1 || session.LoggedInAccount.roleId == 2)} ?
+                          'Xem, thêm, sửa hoặc xóa sản phẩm Sony.' :
+                          'Xem danh sách sản phẩm Sony nhanh chóng.'">
+                        Xem, thêm, sửa hoặc xóa sản phẩm Sony.
+                    </div>
+
+                    <a class="btn btn-primary btn-pill"
+                       th:if="${session.LoggedInAccount != null && (session.LoggedInAccount.roleId == 1 || session.LoggedInAccount.roleId == 2)}"
+                       th:href="@{/products}">Đi đến quản lý sản phẩm →</a>
+
+                    <a class="btn btn-outline-primary btn-pill"
+                       th:if="${session.LoggedInAccount != null && session.LoggedInAccount.roleId == 3}"
+                       th:href="@{/products}">Xem danh sách sản phẩm →</a>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="dash-card">
+                    <div class="card-icon" style="background:#f1f5f9;color:#111827;">🗂</div>
+                    <div class="card-title"
+                         th:text="${session.LoggedInAccount != null && (session.LoggedInAccount.roleId == 1 || session.LoggedInAccount.roleId == 2)} ?
+                          'Quản lý danh mục' : 'Danh mục'">Quản lý danh mục</div>
+                    <div class="card-desc"
+                         th:text="${session.LoggedInAccount != null && (session.LoggedInAccount.roleId == 1 || session.LoggedInAccount.roleId == 2)} ?
+                          'Tổ chức các nhóm sản phẩm, sắp xếp khoa học.' :
+                          'Duyệt danh mục để tìm sản phẩm theo nhóm.'">
+                        Tổ chức các nhóm sản phẩm, sắp xếp khoa học.
+                    </div>
+
+                    <a class="btn btn-secondary btn-pill"
+                       th:if="${session.LoggedInAccount != null && (session.LoggedInAccount.roleId == 1 || session.LoggedInAccount.roleId == 2)}"
+                       th:href="@{/categories}">Đi đến quản lý danh mục →</a>
+
+                    <a class="btn btn-outline-secondary btn-pill"
+                       th:if="${session.LoggedInAccount != null && session.LoggedInAccount.roleId == 3}"
+                       th:href="@{/categories}">Xem danh sách danh mục →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer fragment -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

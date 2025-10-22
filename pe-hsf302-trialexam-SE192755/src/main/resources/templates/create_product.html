@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${isEdit} ? 'Sửa sản phẩm' : 'Tạo sản phẩm'">Tạo sản phẩm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* ===== SCOPED: chỉ áp dụng cho trang form sản phẩm ===== */
+        .product-form-page{
+            --primary:#0d6efd; --ink:#0f172a; --muted:#64748b;
+            --glass: rgba(255,255,255,.66); --border: rgba(13,110,253,.10);
+            --glow: 0 14px 40px rgba(13,110,253,.18);
+            min-height:100vh; margin:0; font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                    radial-gradient(1100px 600px at -10% -10%, #dbeafe 0%, transparent 55%),
+                    radial-gradient(900px 540px at 110% 10%, #ffe4e6 0%, transparent 55%),
+                    linear-gradient(135deg, #f8fafc, #eef2ff 60%, #e2e8f0);
+            background-size:300% 300%; animation: aurora 14s ease-in-out infinite;
+        }
+        @keyframes aurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+        .product-form-page .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.6;z-index:-1;animation:float 10s ease-in-out infinite alternate}
+        .product-form-page .orb.blue{width:280px;height:280px;left:6%;top:10%;background:rgba(13,110,253,.35)}
+        .product-form-page .orb.pink{width:240px;height:240px;right:8%;bottom:8%;background:rgba(236,72,153,.35);animation-delay:1.2s}
+        @keyframes float{from{transform:translate(0,0)}to{transform:translate(16px,-18px)}}
+
+        .product-form-page .wrap{width:min(1100px,100%); display:grid; grid-template-columns: 1fr 360px; gap:20px}
+        @media (max-width: 992px){ .product-form-page .wrap{grid-template-columns:1fr} .product-form-page .preview{order:-1} }
+
+        .product-form-page .product-card{
+            background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.5));
+            border:1px solid var(--border); border-radius:24px;
+            box-shadow:0 28px 80px rgba(13,110,253,.12), inset 0 1px 0 rgba(255,255,255,.6);
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+            overflow:hidden; position:relative; animation:drop .5s ease both;
+        }
+        @keyframes drop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .product-form-page .product-card::before{
+            content:""; position:absolute; inset:-2px; border-radius:26px; padding:1px;
+            background: conic-gradient(from 0deg,#60a5fa,#34d399,#f472b6,#60a5fa);
+            -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+            -webkit-mask-composite:xor; mask-composite:exclude; animation:spin 9s linear infinite;
+        }
+        @keyframes spin{to{transform:rotate(1turn)}}
+
+        .product-form-page .card-head{display:flex;align-items:center;justify-content:space-between;gap:16px;
+            padding:22px 26px; border-bottom:1px solid rgba(13,110,253,.08);
+            background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.35))}
+        .product-form-page .badge-mode{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;
+            font-weight:800;letter-spacing:.2px;color:#0b5ed7;background:rgba(13,110,253,.1);border:1px solid rgba(13,110,253,.2);animation:pop .42s ease both}
+        @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+        .product-form-page .title{margin:0;font-weight:900;letter-spacing:.2px;color:var(--ink)}
+        .product-form-page .title.shimmer{
+            background:linear-gradient(90deg,#0f172a,#2563eb,#0ea5e9,#0f172a);
+            -webkit-background-clip:text;background-clip:text;color:transparent;background-size:300% 100%;animation:shimmer 6s linear infinite}
+        @keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+        .product-form-page .sub{margin:2px 0 0;color:var(--muted);font-size:.95rem}
+
+        .product-form-page .card-body{padding:26px}
+        .product-form-page .section{background:rgba(255,255,255,.55);border:1px solid rgba(13,110,253,.06);
+            border-radius:16px;padding:18px;margin-bottom:16px;animation:fadeUp .5s ease both}
+        .product-form-page .section:nth-of-type(2){animation-delay:.08s}
+        .product-form-page .section:nth-of-type(3){animation-delay:.14s}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .product-form-page .section-title{font-weight:800;color:#111827;margin-bottom:10px;font-size:1.05rem}
+
+        .product-form-page .fl{position:relative}
+        .product-form-page .fl input.form-control{padding-top:1.35rem}
+        .product-form-page .fl label{
+            position:absolute; left:12px; top:.6rem; padding:0 6px; background:transparent; color:#6b7280;
+            transition: all .16s ease; pointer-events:none; font-weight:700;
+        }
+        .product-form-page .fl input:focus + label,
+        .product-form-page .fl input:not(:placeholder-shown) + label{
+            top:-.55rem; background:#fff; border-radius:8px; color:#2563eb; font-size:.8rem; box-shadow:0 0 0 .25rem rgba(13,110,253,.08)
+        }
+
+        .product-form-page .form-label{font-weight:800;color:#0f172a}
+        .product-form-page .form-control,.product-form-page .form-select{
+            border-radius:14px;padding:12px 14px;border:1px solid #e2e8f0;background:#ffffffcc;
+            transition: box-shadow .18s ease, border-color .18s ease, transform .06s ease;
+        }
+        .product-form-page .form-control:hover,.product-form-page .form-select:hover{transform:translateY(-1px)}
+        .product-form-page .form-control:focus,.product-form-page .form-select:focus{
+            box-shadow:0 0 0 .25rem rgba(13,110,253,.15), var(--glow);border-color:rgba(13,110,253,.55);background:#fff}
+        .product-form-page .form-control.is-invalid{animation:shake .18s linear 2}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+        .product-form-page .hint{color:var(--muted);font-size:.92rem}
+
+        .product-form-page .range{accent-color:var(--primary)}
+
+        .product-form-page .btn-pill{border-radius:999px;padding:12px 20px;font-weight:900;letter-spacing:.2px;transition:transform .18s ease, box-shadow .18s ease;position:relative;overflow:hidden}
+        .product-form-page .btn-pill:hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(13,110,253,.2)}
+        .product-form-page .btn-outline-dark{border-color:#cbd5e1}
+        .product-form-page .btn-outline-dark:hover{color:#fff;background:#0f172a;border-color:#0f172a}
+        .product-form-page .btn-pill::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;background:radial-gradient(160px 160px at var(--rx,50%) var(--ry,50%), rgba(255,255,255,.45), transparent 60%);transition:opacity .25s ease;pointer-events:none}
+        .product-form-page .btn-pill:active::after{opacity:1}
+        .product-form-page .kpi{display:flex;align-items:center;gap:16px;color:var(--muted);font-size:.92rem}
+
+        .product-form-page .preview{
+            background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.5));
+            border:1px solid var(--border); border-radius:24px;
+            box-shadow:0 22px 60px rgba(13,110,253,.12), inset 0 1px 0 rgba(255,255,255,.6);
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+            padding:22px; height:max-content; position:sticky; top:24px; animation:drop .55s .06s ease both
+        }
+        .product-form-page .pv-title{font-weight:900;margin:0 0 10px}
+        .product-form-page .pv-line{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #e2e8f0;padding:8px 0}
+        .product-form-page .pv-key{color:#6b7280;font-weight:700}.product-form-page .pv-val{font-weight:700}
+        .product-form-page .pv-price{color:#0d6efd}
+        .product-form-page .pv-cat{background:#f1f3f5;border-radius:999px;padding:4px 10px;font-weight:600}
+    </style>
+</head>
+
+<!-- Sticky footer layout -->
+<body class="product-form-page d-flex flex-column min-vh-100">
+
+<!-- HEADER -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- background blobs (fixed, không ảnh hưởng layout) -->
+<div class="orb blue"></div><div class="orb pink"></div>
+
+<!-- MAIN -->
+<main class="flex-grow-1 py-4">
+    <div class="wrap" th:with="editing=${isEdit}">
+        <!-- FORM CARD -->
+        <div class="product-card" th:object="${sonyProducts}">
+            <div class="card-head">
+                <div>
+                    <div class="badge-mode" th:text="${editing} ? '✏️ Chế độ sửa' : '➕ Tạo mới'">➕ Tạo mới</div>
+                    <input type="hidden" th:if="${editing}" th:field="*{productID}"/>
+                </div>
+                <div class="text-end">
+                    <h4 class="title shimmer" th:text="${editing} ? 'Sửa sản phẩm' : 'Tạo sản phẩm'">Tạo sản phẩm</h4>
+                    <p class="sub" th:text="${editing} ? 'Cập nhật thông tin sản phẩm hiện có.' : 'Điền thông tin dưới đây để thêm sản phẩm mới.'">Điền thông tin dưới đây để thêm sản phẩm mới.</p>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <form th:action="${editing} ? @{'/products/edit/' + *{productID}} : @{/products/create}" method="post" novalidate id="productForm">
+                    <!-- Thông tin cơ bản -->
+                    <div class="section">
+                        <div class="section-title">Thông tin cơ bản</div>
+                        <div class="row g-3">
+                            <div class="col-lg-7">
+                                <div class="fl">
+                                    <input class="form-control" th:field="*{productName}" id="name" placeholder=" " required maxlength="100" />
+                                    <label for="name">Tên sản phẩm</label>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <div class="hint">Tên nên ngắn gọn, rõ nghĩa (≤ 100 ký tự)</div>
+                                    <div class="hint"><span id="nameCount">0</span>/100</div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <label class="form-label">Giá (VND)</label>
+                                <input type="number" min="0" step="1" class="form-control" th:field="*{price}" id="price" placeholder="0" required />
+                                <div class="hint"><span id="priceFmt">0 ₫</span></div>
+                            </div>
+
+                            <div class="col-lg-2">
+                                <label class="form-label">Tồn kho</label>
+                                <input type="number" min="0" step="1" class="form-control" th:field="*{stock}" id="stockNum" placeholder="0" required />
+                                <input type="range" min="0" max="500" step="1" class="form-range range mt-2" id="stockRange">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phân loại & metadata -->
+                    <div class="section">
+                        <div class="section-title">Phân loại & Metadata</div>
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <label class="form-label">Danh mục</label>
+                                <select class="form-select" th:field="*{sonyCategories.cateID}" id="cate">
+                                    <option value="">-- Chọn danh mục --</option>
+                                    <option th:each="c : ${categories}" th:value="${c.cateID}" th:text="${c.cateName}"></option>
+                                </select>
+                                <div class="hint">Chọn nhóm phù hợp để quản lý & lọc dễ hơn.</div>
+                            </div>
+                            <div class="col-lg-6">
+                                <label class="form-label">Ngày tạo</label>
+                                <input class="form-control" th:value="${sonyProducts.createdAt != null ? #temporals.format(sonyProducts.createdAt, 'dd/MM/yyyy HH:mm') : 'Chưa có'}" placeholder="Tự sinh khi lưu" disabled />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hành động -->
+                    <div class="d-flex align-items-center justify-content-between mt-3">
+                        <div class="kpi">
+                            <span>⌛️ Hoàn tất trong ~15 giây</span><span>•</span>
+                            <span>💾 Nhấn <strong th:text="${editing} ? 'Cập nhật' : 'Tạo mới'">Tạo mới</strong> để lưu</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-outline-dark btn-pill" th:href="@{/products}">← Quay lại</a>
+                            <button type="submit" class="btn btn-primary btn-pill" th:text="${editing} ? '💾 Cập nhật' : '✅ Tạo mới'">✅ Tạo mới</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- PREVIEW -->
+        <aside class="preview">
+            <h5 class="pv-title">👀 Xem trước</h5>
+            <div class="pv-line"><span class="pv-key">Tên</span><span class="pv-val" id="pvName">—</span></div>
+            <div class="pv-line"><span class="pv-key">Giá</span><span class="pv-val pv-price" id="pvPrice">0 ₫</span></div>
+            <div class="pv-line"><span class="pv-key">Tồn kho</span><span class="pv-val" id="pvStock">0</span></div>
+            <div class="pv-line"><span class="pv-key">Danh mục</span><span class="pv-val"><span class="pv-cat" id="pvCat">—</span></span></div>
+            <div class="mt-3 text-muted small">Dữ liệu xem trước chỉ mang tính tham khảo trước khi lưu.</div>
+        </aside>
+    </div>
+</main>
+
+<!-- FOOTER -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // format VND
+    const fmtVND = n => new Intl.NumberFormat('vi-VN').format(+n || 0) + ' ₫';
+
+    // Elements
+    const nameEl = document.getElementById('name');
+    const nameCount = document.getElementById('nameCount');
+    const priceEl = document.getElementById('price');
+    const priceFmt = document.getElementById('priceFmt');
+    const stockNum = document.getElementById('stockNum');
+    const stockRange = document.getElementById('stockRange');
+    const cateEl = document.getElementById('cate');
+
+    const pvName = document.getElementById('pvName');
+    const pvPrice = document.getElementById('pvPrice');
+    const pvStock = document.getElementById('pvStock');
+    const pvCat = document.getElementById('pvCat');
+
+    function init(){
+        nameCount.textContent = (nameEl.value || '').length;
+        priceFmt.textContent = fmtVND(priceEl.value);
+        pvName.textContent = nameEl.value || '—';
+        pvPrice.textContent = fmtVND(priceEl.value);
+        pvStock.textContent = stockNum.value || '0';
+        pvCat.textContent = cateEl.options[cateEl.selectedIndex]?.text || '—';
+        stockRange.value = stockNum.value || 0;
+    }
+
+    nameEl.addEventListener('input', () => {
+        nameCount.textContent = nameEl.value.length;
+        pvName.textContent = nameEl.value || '—';
+    });
+
+    priceEl.addEventListener('input', () => {
+        priceEl.title = fmtVND(priceEl.value);
+        priceFmt.textContent = priceEl.title;
+        pvPrice.textContent = priceEl.title;
+    });
+
+    stockNum.addEventListener('input', () => {
+        stockRange.value = stockNum.value || 0;
+        pvStock.textContent = stockNum.value || '0';
+    });
+    stockRange.addEventListener('input', () => {
+        stockNum.value = stockRange.value;
+        pvStock.textContent = stockRange.value;
+    });
+
+    cateEl.addEventListener('change', () => {
+        pvCat.textContent = cateEl.options[cateEl.selectedIndex]?.text || '—';
+    });
+
+    // ripple
+    document.querySelectorAll('.btn-pill').forEach(btn=>{
+        btn.addEventListener('pointermove', e=>{
+            const r = btn.getBoundingClientRect();
+            btn.style.setProperty('--rx', (e.clientX - r.left) + 'px');
+            btn.style.setProperty('--ry', (e.clientY - r.top) + 'px');
+        });
+    });
+
+    // validate
+    document.getElementById('productForm').addEventListener('submit', (e)=>{
+        let ok = true;
+        if(!nameEl.value.trim()){ nameEl.classList.add('is-invalid'); ok=false; }
+        if(priceEl.value === '' || +priceEl.value < 0){ priceEl.classList.add('is-invalid'); ok=false; }
+        if(stockNum.value === '' || +stockNum.value < 0){ stockNum.classList.add('is-invalid'); ok=false; }
+        if(!ok){ e.preventDefault(); setTimeout(()=> {
+            nameEl.classList.remove('is-invalid'); priceEl.classList.remove('is-invalid'); stockNum.classList.remove('is-invalid');
+        }, 400);}
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

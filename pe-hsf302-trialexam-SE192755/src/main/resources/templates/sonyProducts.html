@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Sản phẩm - Sony Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root{ --primary:#0d6efd; --ink:#0f172a; --muted:#6b7280; }
+
+        /* Sticky footer layout */
+        html, body { height: 100%; }
+        body.product-page{
+            display:flex; flex-direction:column; min-height:100vh;
+            font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                    radial-gradient(1000px 600px at -10% -10%, #dbeafe 0%, transparent 60%),
+                    radial-gradient(900px 500px at 110% 0%, #ffe4e6 0%, transparent 60%),
+                    linear-gradient(135deg, #f8fafc, #eef2ff 60%, #e2e8f0);
+            background-size:300% 300%; animation: aurora 14s ease-in-out infinite;
+            overflow-x:hidden;
+        }
+        @keyframes aurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        main.product-main{ flex:1 0 auto; } /* đẩy footer xuống đáy */
+
+        /* Blobs (fixed, không ảnh hưởng layout) */
+        .product-page .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.6;animation:moveBlob 10s infinite alternate ease-in-out;z-index:-1;}
+        .product-page .blob.blue{background:rgba(13,110,253,.4);width:280px;height:280px;top:15%;left:10%;}
+        .product-page .blob.pink{background:rgba(236,72,153,.4);width:240px;height:240px;bottom:10%;right:12%;animation-delay:3s;}
+        @keyframes moveBlob{0%{transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.05)}100%{transform:translateY(0) scale(1)}}
+
+        /* ====== SCOPED TO PAGE ====== */
+        .product-main .container{max-width:1150px;padding:60px 20px 80px;}
+        .product-page h4{
+            font-weight:900;
+            background:linear-gradient(90deg,#0f172a,#2563eb,#0ea5e9,#0f172a);
+            -webkit-background-clip:text;background-clip:text;color:transparent;
+            background-size:300% 100%;animation:shimmer 6s linear infinite;
+        }
+        @keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+        .product-page .topbar{margin-bottom:14px;}
+
+        /* Search */
+        .product-page .search-wrap{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.8);
+            border:1px solid rgba(13,110,253,.12);border-radius:999px;padding:8px 12px;
+            box-shadow:0 8px 22px rgba(13,110,253,.08);backdrop-filter:blur(8px);}
+        .product-page .search-input{border:none;outline:none;background:transparent;width:240px;font-weight:600;}
+        .product-page .search-input::placeholder{color:#9aa3af;font-weight:500;}
+        .product-page .clear-btn{border:none;background:transparent;color:#6b7280;padding:6px 8px;border-radius:999px;}
+        .product-page .clear-btn:hover{background:#eef2ff;color:#2563eb;}
+
+        /* Table */
+        .product-page .table-wrap{
+            background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.65));
+            border:1px solid rgba(13,110,253,.08);
+            border-radius:18px;box-shadow:0 18px 50px rgba(13,110,253,.12);
+            backdrop-filter:blur(10px);overflow:hidden;
+            transition:box-shadow .3s,transform .3s;animation:fadeIn .5s ease both;
+        }
+        .product-page .table-wrap:hover{box-shadow:0 22px 70px rgba(13,110,253,.16);transform:translateY(-2px);}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+        .product-page table thead th{
+            background:linear-gradient(90deg,#0d6efd,#3b82f6);
+            color:#fff;text-align:center;vertical-align:middle;border:none;letter-spacing:.4px;font-weight:600;
+        }
+        .product-page table tbody td{vertical-align:middle;border-color:rgba(13,110,253,.08);}
+        .product-page tbody tr{transition:opacity .18s ease,transform .18s ease;}
+        .product-page tbody tr.hide{opacity:0;transform:translateY(6px);pointer-events:none;}
+        .product-page table tbody tr:hover td{background:rgba(13,110,253,.05);}
+
+        .product-page mark.hl{
+            background:linear-gradient(90deg,#fff3cd,#ffe8a3);
+            padding:0 .2em;border-radius:.3em;
+            box-shadow:0 0 0 2px rgba(255,193,7,.25);
+            animation:pulse .9s ease-out 1;
+        }
+        @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,193,7,.5)}100%{box-shadow:0 0 0 8px rgba(255,193,7,0)}}
+
+        /* Badges */
+        .product-page .price-badge{display:inline-block;padding:6px 12px;border-radius:999px;background:#eef5ff;color:#0d6efd;font-weight:600;font-family:ui-monospace,Menlo,Consolas,monospace;}
+        .product-page .stock-badge{display:inline-block;padding:6px 12px;border-radius:999px;font-weight:600;}
+        .product-page .stock-ok{background:#e9f8ee;color:#198754;}
+        .product-page .stock-low{background:#fff3cd;color:#997404;}
+        .product-page .stock-zero{background:#fdecea;color:#b02a37;}
+        .product-page .cat-badge{display:inline-block;padding:5px 12px;border-radius:999px;background:#f1f3f5;color:#495057;font-weight:500;}
+
+        /* Buttons (scoped – không ảnh hưởng header/footer) */
+        .product-page .btn{border-radius:999px;font-weight:700;letter-spacing:.2px;position:relative;overflow:hidden;}
+        .product-page .btn-outline-primary:hover{color:#fff;}
+        .product-page .btn-outline-danger:hover{color:#fff;}
+        .product-page .btn-primary{box-shadow:0 6px 18px rgba(13,110,253,.25);}
+        .product-page .btn-primary:hover{box-shadow:0 12px 32px rgba(13,110,253,.3);transform:translateY(-1px);}
+        .product-page .btn-link{text-decoration:none;font-weight:600;color:#0f172a;}
+        .product-page .btn-link:hover{text-decoration:underline;}
+    </style>
+</head>
+
+<body class="product-page">
+<!-- Header -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- blobs -->
+<div class="blob blue"></div>
+<div class="blob pink"></div>
+
+<!-- MAIN -->
+<main class="product-main">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center topbar">
+            <h4 class="mb-0">📦 Danh sách sản phẩm</h4>
+
+            <div class="d-flex align-items-center gap-3">
+                <!-- search -->
+                <div class="search-wrap">
+                    <span>🔎</span>
+                    <input id="searchInput" class="search-input" type="search" placeholder="Tìm theo tên / danh mục…" autocomplete="off">
+                    <button id="clearBtn" class="clear-btn" title="Xóa tìm kiếm">✖</button>
+                </div>
+
+                <a class="btn btn-outline-secondary" th:href="@{/categories}">🗂 Danh mục</a>
+                <a class="btn btn-primary"
+                   th:if="${session.LoggedInAccount != null and (session.LoggedInAccount.roleId == 1 or session.LoggedInAccount.roleId == 2)}"
+                   th:href="@{/products/create}">+ Thêm sản phẩm</a>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th style="width:90px;">ID</th>
+                        <th>Tên sản phẩm</th>
+                        <th style="width:160px;">Giá</th>
+                        <th style="width:120px;">Tồn</th>
+                        <th style="width:200px;">Danh mục</th>
+                        <th style="width:220px;"
+                            th:if="${session.LoggedInAccount != null and (session.LoggedInAccount.roleId == 1 or session.LoggedInAccount.roleId == 2)}">Thao tác</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="productBody">
+                    <tr th:each="p : ${sonyProducts}">
+                        <td class="text-center" th:text="${p.productID}">1</td>
+                        <td data-col="name" th:text="${p.productName}">Sony WH-1000XM5</td>
+                        <td class="text-center">
+                  <span class="price-badge" data-bs-toggle="tooltip" data-bs-title=""
+                        th:text="${#numbers.formatInteger(p.price, 0, 'POINT')}">9.990.000</span>
+                        </td>
+                        <td class="text-center">
+                  <span class="stock-badge"
+                        th:classappend="${p.stock == 0} ? ' stock-zero' : (${p.stock} &lt;= 5 ? ' stock-low' : ' stock-ok')"
+                        th:text="${p.stock}">50</span>
+                        </td>
+                        <td class="text-center">
+                  <span class="cat-badge" data-col="cat"
+                        th:text="${p.sonyCategories != null ? p.sonyCategories.cateName : '—'}">Tai nghe</span>
+                        </td>
+                        <td class="text-center"
+                            th:if="${session.LoggedInAccount != null and (session.LoggedInAccount.roleId == 1 or session.LoggedInAccount.roleId == 2)}">
+                            <a class="btn btn-sm btn-outline-primary me-1" th:href="@{'/products/edit/' + ${p.productID}}">Sửa</a>
+                            <a class="btn btn-sm btn-outline-danger"
+                               th:href="@{'/products/delete/' + ${p.productID}}"
+                               onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">Xóa</a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(sonyProducts)}">
+                        <td colspan="6" class="text-center text-muted py-4">Chưa có sản phẩm.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-4 text-center">
+            <a th:href="@{/home}" class="btn btn-link">← Về trang chủ</a>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Tooltip giá VND
+    const priceBadges = document.querySelectorAll('.price-badge');
+    priceBadges.forEach(el=>{
+        const raw=(el.textContent||'').replace(/[^\d]/g,'');
+        const val=raw?parseInt(raw,10):0;
+        const vn=new Intl.NumberFormat('vi-VN').format(val)+' ₫';
+        el.setAttribute('data-bs-title',vn);
+    });
+    const enableTooltips=()=>{
+        const tEls=[].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tEls.forEach(el=>new bootstrap.Tooltip(el));
+    };
+
+    // Search + highlight
+    const bodyEl=document.getElementById('productBody');
+    const rows=Array.from(bodyEl.querySelectorAll('tr')).filter(tr=>tr.querySelector('[data-col]'));
+    const nameSel='[data-col="name"]',catSel='[data-col="cat"]';
+    function clearHL(node){
+        node.querySelectorAll('mark.hl').forEach(m=>{const t=document.createTextNode(m.textContent);m.replaceWith(t);});
+    }
+    function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+    function applyHL(el,q){
+        if(!q) return;
+        const text=el.textContent; const i=text.toLowerCase().indexOf(q.toLowerCase());
+        if(i===-1) return;
+        const b=text.slice(0,i),h=text.slice(i,i+q.length),a=text.slice(i+q.length);
+        el.innerHTML=`${escapeHtml(b)}<mark class="hl">${escapeHtml(h)}</mark>${escapeHtml(a)}`;
+    }
+    const searchInput=document.getElementById('searchInput');
+    const clearBtn=document.getElementById('clearBtn');
+    function filterRows(){
+        const q=(searchInput.value||'').trim().toLowerCase();
+        rows.forEach(tr=>{
+            const nameEl=tr.querySelector(nameSel),catEl=tr.querySelector(catSel);
+            clearHL(nameEl); clearHL(catEl);
+            const match=!q || nameEl.textContent.toLowerCase().includes(q) || catEl.textContent.toLowerCase().includes(q);
+            if(match){ tr.classList.remove('hide'); if(q){ applyHL(nameEl,q); applyHL(catEl,q);} }
+            else { tr.classList.add('hide'); }
+        });
+    }
+    searchInput.addEventListener('input',filterRows);
+    clearBtn.addEventListener('click',()=>{searchInput.value='';filterRows();searchInput.focus();});
+    document.addEventListener('DOMContentLoaded',()=>{filterRows();enableTooltips();});
+</script>
+</body>
+</html>

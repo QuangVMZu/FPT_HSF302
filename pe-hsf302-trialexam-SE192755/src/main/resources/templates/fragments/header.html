@@ -1,0 +1,20 @@
+<!-- templates/fragments/header.html -->
+<nav class="navbar navbar-expand-lg navbar-dark sa-navbar" th:fragment="header">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/home}">Sony</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary nav-btn" th:href="@{/products}">📦 Sản phẩm</a>
+            <a class="btn btn-outline-secondary nav-btn" th:href="@{/categories}">🗂 Danh mục</a>
+            <a class="btn btn-outline-danger nav-btn" th:href="@{/logout}">🔓 Đăng xuất</a>
+        </div>
+    </div>
+
+    <style>
+        /* scoped để không đè CSS trang khác */
+        .sa-navbar{background:rgba(255,255,255,.6);backdrop-filter:blur(10px);
+            border-bottom:1px solid rgba(13,110,253,.1);box-shadow:0 5px 20px rgba(13,110,253,.05)}
+        .sa-navbar .navbar-brand{font-weight:800;letter-spacing:.5px;color:#0d6efd!important}
+        .sa-navbar .nav-btn{border-radius:999px;font-weight:600;transition:all .25s}
+        .sa-navbar .nav-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(13,110,253,.15)}
+    </style>
+</nav>

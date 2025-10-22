@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Danh mục - Sony Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* ====== SCOPED TO THIS PAGE ONLY ====== */
+        .categories-page{
+            font-family:"Segoe UI",Tahoma,Verdana,sans-serif;
+            min-height:100vh; margin:0;
+            background:linear-gradient(135deg,#f8fafc,#eef2ff 60%,#e2e8f0);
+            background-size:300% 300%; animation:aurora 14s ease-in-out infinite;
+        }
+        @keyframes aurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+        :root{--primary:#0d6efd;--ink:#0f172a;--muted:#6b7280;--border:rgba(13,110,253,.1);}
+
+        /* blobs cố định để không ảnh hưởng chiều cao layout */
+        .categories-page .blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.55;z-index:-1;animation:move 10s ease-in-out infinite alternate}
+        .categories-page .blob.blue{width:280px;height:280px;left:6%;top:12%;background:rgba(13,110,253,.35)}
+        .categories-page .blob.pink{width:240px;height:240px;right:8%;bottom:8%;background:rgba(236,72,153,.35);animation-delay:2s}
+        @keyframes move{0%{transform:translate(0,0)}100%{transform:translate(12px,-14px)}}
+
+        /* page spacing: header ở fragment đã fixed trên, nên dùng padding-top nhẹ */
+        .categories-page .page-container{max-width:1000px; padding-top:60px; padding-bottom:60px}
+
+        .categories-page .page-title{
+            font-weight:900; letter-spacing:.2px;
+            background:linear-gradient(90deg,#0f172a,#2563eb,#0ea5e9,#0f172a);
+            -webkit-background-clip:text; background-clip:text; color:transparent;
+            background-size:300% 100%; animation:shimmer 6s linear infinite;
+        }
+        @keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+        .categories-page .muted{color:var(--muted)}
+
+        .categories-page .role-pill{
+            display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+            font-weight:600;font-size:.9rem;background:rgba(13,110,253,.08);
+            border:1px solid var(--border);backdrop-filter:blur(8px)
+        }
+        .categories-page .role-admin{color:#0d6efd}
+        .categories-page .role-staff{color:#10b981}
+        .categories-page .role-user{color:#7c3aed}
+
+        /* toolbar */
+        .categories-page .toolbar .btn{
+            border-radius:999px;font-weight:700;padding:10px 18px;position:relative;overflow:hidden;
+            transition:transform .18s ease,box-shadow .18s ease
+        }
+        .categories-page .toolbar .btn:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(13,110,253,.18)}
+        .categories-page .toolbar .btn:after{
+            content:"";position:absolute;inset:0;border-radius:999px;
+            background:radial-gradient(120px 120px at var(--x,50%) var(--y,50%),rgba(255,255,255,.35),transparent 60%);
+            opacity:0;transition:opacity .25s ease;pointer-events:none
+        }
+        .categories-page .toolbar .btn:active:after{opacity:1}
+
+        /* search */
+        .categories-page .search-box{
+            max-width:280px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;
+            box-shadow:0 4px 10px rgba(13,110,253,.08);display:flex;align-items:center;gap:6px;
+            padding:6px 10px;transition:all .25s ease
+        }
+        .categories-page .search-box:focus-within{box-shadow:0 0 0 4px rgba(13,110,253,.12)}
+        .categories-page .search-input{border:none;outline:none;flex:1;font-weight:600}
+        .categories-page .search-clear{background:none;border:none;color:#6b7280;cursor:pointer;font-size:1rem}
+        .categories-page mark{background:linear-gradient(90deg,#fff3cd,#ffe8a3);border-radius:4px;padding:0 .2em}
+
+        .categories-page .glass-card{
+            background:rgba(255,255,255,.8);border:1px solid var(--border);
+            border-radius:20px;box-shadow:0 20px 60px rgba(13,110,253,.12);padding:1rem 1.5rem
+        }
+        .categories-page table thead th{
+            background:linear-gradient(90deg,#0d6efd,#2563eb);color:#fff;text-align:center;letter-spacing:.3px;border:none
+        }
+        .categories-page table tbody td{vertical-align:middle;border-color:#f1f5f9}
+        .categories-page tbody tr{transition:all .25s ease}
+        .categories-page tbody tr.hide{opacity:0;transform:translateY(4px);pointer-events:none}
+        .categories-page tbody tr:hover td{background:#f8faff}
+        .categories-page .btn-outline-primary:hover{color:#fff}
+        .categories-page .btn-outline-danger:hover{color:#fff}
+    </style>
+</head>
+
+<!-- Sticky footer layout: flex column -->
+<body class="categories-page d-flex flex-column min-vh-100">
+
+<!-- Header fragment -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- blobs trang trí -->
+<div class="blob blue"></div>
+<div class="blob pink"></div>
+
+<!-- MAIN -->
+<main class="flex-grow-1">
+    <div class="container page-container">
+        <!-- header section -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <h3 class="page-title">📂 Danh mục sản phẩm</h3>
+                <div class="muted">
+                    Quản lý các danh mục của Sony
+                    <span class="ms-2 role-pill"
+                          th:classappend="${session.LoggedInAccount != null and session.LoggedInAccount.roleId == 1} ? ' role-admin' :
+                                  (${session.LoggedInAccount != null and session.LoggedInAccount.roleId == 2} ? ' role-staff' : ' role-user')">
+              👤
+              <span th:text="${session.LoggedInAccount != null ?
+                              (session.LoggedInAccount.roleId == 1 ? 'Admin' :
+                               (session.LoggedInAccount.roleId == 2 ? 'Staff' : 'User')) : 'Guest'}">User</span>
+            </span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input id="searchInput" class="search-input" placeholder="Tìm danh mục..." />
+                    <button class="search-clear" id="clearBtn">✖</button>
+                </div>
+
+                <div class="toolbar"
+                     th:if="${session.LoggedInAccount != null and (session.LoggedInAccount.roleId == 1 or session.LoggedInAccount.roleId == 2)}">
+                    <a class="btn btn-primary" th:href="@{/categories/create}">+ Thêm danh mục</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- table -->
+        <div class="glass-card">
+            <div class="table-responsive">
+                <table class="table align-middle text-center mb-0">
+                    <thead>
+                    <tr><th>ID</th><th>Tên danh mục</th><th>Thao tác</th></tr>
+                    </thead>
+                    <tbody id="tbody">
+                    <tr th:each="c : ${categories}">
+                        <td th:text="${c.cateID}">1</td>
+                        <td data-col="name" th:text="${c.cateName}">Âm thanh</td>
+                        <td>
+                            <div th:if="${session.LoggedInAccount != null and (session.LoggedInAccount.roleId == 1 or session.LoggedInAccount.roleId == 2)}">
+                                <a class="btn btn-sm btn-outline-primary me-1" th:href="@{'/categories/edit/' + ${c.cateID}}">Sửa</a>
+                                <a class="btn btn-sm btn-outline-danger"
+                                   th:href="@{'/categories/delete/' + ${c.cateID}}"
+                                   onclick="return confirm('Bạn có chắc muốn xóa danh mục này?');">Xóa</a>
+                            </div>
+                            <div class="muted" th:if="${session.LoggedInAccount != null and session.LoggedInAccount.roleId == 3}">—</div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(categories)}">
+                        <td colspan="3" class="text-center text-muted py-4">Chưa có danh mục nào.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a th:href="@{/home}" class="fw-bold text-decoration-none text-secondary">← Về trang chủ</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer fragment -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    // ====== Search + highlight ======
+    const tbody=document.getElementById('tbody');
+    const rows=[...tbody.querySelectorAll('tr')].filter(r=>r.querySelector('[data-col]'));
+    const input=document.getElementById('searchInput');
+    const clear=document.getElementById('clearBtn');
+
+    function clearHL(el){el.querySelectorAll('mark').forEach(m=>m.replaceWith(m.textContent));}
+    function hl(el,q){
+        if(!q) return;
+        const t=el.textContent, i=t.toLowerCase().indexOf(q.toLowerCase());
+        if(i===-1) return;
+        const b=t.slice(0,i), h=t.slice(i,i+q.length), a=t.slice(i+q.length);
+        el.innerHTML=b+'<mark>'+h+'</mark>'+a;
+    }
+    function filter(){
+        const q=input.value.trim().toLowerCase();
+        rows.forEach(tr=>{
+            const cell=tr.querySelector('[data-col]');
+            clearHL(cell);
+            const text=cell.textContent.toLowerCase();
+            const match=!q || text.includes(q);
+            if(match){tr.classList.remove('hide'); hl(cell,q);} else {tr.classList.add('hide');}
+        });
+    }
+    input.addEventListener('input',filter);
+    clear.addEventListener('click',()=>{input.value='';filter();input.focus();});
+
+    // Ripple pointer
+    document.querySelectorAll('.toolbar .btn').forEach(btn=>{
+        btn.addEventListener('pointermove',e=>{
+            const r=btn.getBoundingClientRect();
+            btn.style.setProperty('--x',(e.clientX-r.left)+'px');
+            btn.style.setProperty('--y',(e.clientY-r.top)+'px');
+        });
+    });
+
+    // Ctrl+F => focus search
+    document.addEventListener('keydown',e=>{
+        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='f'){e.preventDefault();input.focus();}
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

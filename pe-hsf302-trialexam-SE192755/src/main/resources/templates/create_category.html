@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${isEdit} ? 'Sửa danh mục' : 'Tạo danh mục'">Tạo danh mục</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* ============ SCOPED TO THIS PAGE ONLY ============ */
+        .category-form-page{
+            --primary:#0d6efd; --ink:#0f172a; --muted:#64748b;
+            --glass: rgba(255,255,255,.65); --border: rgba(13,110,253,.12);
+            --glow: 0 12px 36px rgba(13,110,253,.18);
+            --bg-1:#f8fafc; --bg-2:#eef2ff; --bg-3:#e2e8f0;
+            --card:#ffffffcc; --stroke:#e2e8f0; --ink-strong:#0b1220;
+            min-height:100vh; margin:0; font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                    radial-gradient(1000px 600px at -10% -10%, #dbeafe 0%, transparent 55%),
+                    radial-gradient(900px 500px at 110% 10%, #ffe4e6 0%, transparent 55%),
+                    linear-gradient(135deg, var(--bg-1), var(--bg-2) 60%, var(--bg-3));
+            background-size:300% 300%; animation:aurora 14s ease-in-out infinite;
+            color:var(--ink);
+        }
+        @keyframes aurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+        /* Dark mode (scoped) */
+        .category-form-page.dark{
+            --bg-1:#0b1220; --bg-2:#0d162b; --bg-3:#111a2f;
+            --glass: rgba(17,26,47,.55); --border: rgba(13,110,253,.25);
+            --card:#0f172acc; --stroke:#1e293b; --ink:#cbd5e1; --ink-strong:#e2e8f0; --muted:#94a3b8;
+        }
+
+        /* Decorative orbs (fixed -> không làm nhảy footer) */
+        .category-form-page .orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.6;z-index:-1;animation:float 10s ease-in-out infinite alternate}
+        .category-form-page .orb.blue{width:280px;height:280px;left:6%;top:12%;background:rgba(13,110,253,.35)}
+        .category-form-page .orb.pink{width:240px;height:240px;right:8%;bottom:8%;background:rgba(236,72,153,.35);animation-delay:1.5s}
+        .category-form-page.dark .orb.blue{background:rgba(59,130,246,.35)}
+        .category-form-page.dark .orb.pink{background:rgba(244,114,182,.35)}
+        @keyframes float{from{transform:translate(0,0)}to{transform:translate(12px,-14px)}}
+
+        .category-form-page .cat-card{
+            width:min(600px,100%); background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.45));
+            border:1px solid var(--border); border-radius:22px; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+            box-shadow:0 24px 60px rgba(13,110,253,.12), inset 0 1px 0 rgba(255,255,255,.4);
+            padding:28px 26px; position:relative; overflow:hidden; animation:drop .5s ease both;
+        }
+        @keyframes drop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .category-form-page .cat-card::before{
+            content:""; position:absolute; inset:-2px; border-radius:24px; padding:1px;
+            background:conic-gradient(from 0deg,#60a5fa,#34d399,#f472b6,#60a5fa);
+            -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+            -webkit-mask-composite:xor; mask-composite:exclude; animation:spin 8s linear infinite;
+        }
+        @keyframes spin{to{transform:rotate(1turn)}}
+
+        .category-form-page .top-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+        .category-form-page .badge-mode{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+            font-weight:700;font-size:.9rem;color:#0b5ed7;background:rgba(13,110,253,.08);border:1px solid rgba(13,110,253,.16)}
+        .category-form-page.dark .badge-mode{color:#93c5fd;background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.25)}
+
+        .category-form-page .title{
+            margin:8px 0 4px;font-weight:900;letter-spacing:.2px;
+            background:linear-gradient(90deg,var(--ink-strong),#2563eb,#0ea5e9,var(--ink-strong));
+            -webkit-background-clip:text;background-clip:text;color:transparent;background-size:300% 100%;animation:shimmer 6s linear infinite;
+        }
+        @keyframes shimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+        .category-form-page .subtitle{color:var(--muted);margin-bottom:4px}
+
+        .category-form-page .progress{height:6px;border-radius:999px;background:#e2e8f0}
+        .category-form-page .progress-bar{background:linear-gradient(90deg,#0d6efd,#4f8cff)}
+        .category-form-page.dark .progress{background:#1e293b}
+
+        .category-form-page .form-area{animation:formIn .45s .06s ease both}
+        @keyframes formIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        .category-form-page .form-label{font-weight:800;color:var(--ink-strong)}
+        .category-form-page .form-control,.category-form-page .form-select{
+            border-radius:14px;padding:12px 14px;border:1px solid var(--stroke);background:var(--card);
+            transition: box-shadow .18s ease, transform .06s ease, border-color .18s ease; color:var(--ink);
+        }
+        .category-form-page .form-control:hover,.category-form-page .form-select:hover{transform:translateY(-1px)}
+        .category-form-page .form-control:focus,.category-form-page .form-select:focus{
+            box-shadow:0 0 0 .25rem rgba(13,110,253,.15), var(--glow);border-color:rgba(13,110,253,.55);background:#fff;color:#0f172a}
+        .category-form-page.dark .form-control:focus,.category-form-page.dark .form-select:focus{background:#0b1220;color:#e2e8f0}
+        .category-form-page .form-text{color:var(--muted)}
+
+        .category-form-page .counter{font-variant-numeric:tabular-nums}
+        .category-form-page .invalid{animation:shake .18s linear 2;border-color:#ef4444 !important}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+        .category-form-page .btns{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+        .category-form-page .btn-pill{border-radius:999px;padding:12px 20px;font-weight:800;letter-spacing:.2px;position:relative;overflow:hidden;
+            transition:transform .18s ease, box-shadow .18s ease}
+        .category-form-page .btn-pill:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(13,110,253,.22)}
+        .category-form-page .btn-outline-dark{border-color:#cbd5e1}
+        .category-form-page .btn-outline-dark:hover{color:#fff;background:#0f172a;border-color:#0f172a}
+        .category-form-page .btn-pill::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:0;
+            background:radial-gradient(160px 160px at var(--rx,50%) var(--ry,50%), rgba(255,255,255,.4), transparent 60%);transition:opacity .25s ease;pointer-events:none}
+        .category-form-page .btn-pill:active::after{opacity:1}
+
+        .category-form-page .toast-wrap{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+        .category-form-page .toast-item{background:#0d6efd;color:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 10px 24px rgba(13,110,253,.3);animation:slideIn .2s ease both}
+        @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        .category-form-page.dark .toast-item{background:#2563eb}
+
+        .category-form-page .toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:700}
+        .category-form-page .toggle input{display:none}
+        .category-form-page .switch{width:44px;height:24px;border-radius:999px;background:#cbd5e1;position:relative}
+        .category-form-page .knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:all .18s ease;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+        .category-form-page input:checked + .switch .knob{left:23px;background:#0d6efd}
+        .category-form-page.dark .switch{background:#334155}
+    </style>
+</head>
+
+<!-- Sticky footer layout -->
+<body class="category-form-page d-flex flex-column min-vh-100">
+
+<!-- Header fragment -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- Background blobs -->
+<div class="orb blue"></div><div class="orb pink"></div>
+
+<!-- MAIN: center the card -->
+<main class="flex-grow-1 d-flex align-items-center justify-content-center py-5">
+    <div class="toast-wrap" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="cat-card" th:object="${sonyCategory}">
+        <div class="top-row">
+            <span class="badge-mode" th:text="${isEdit} ? '✏️ Chế độ sửa' : '➕ Tạo mới'">➕ Tạo mới</span>
+            <!-- Dark mode toggle -->
+            <label class="toggle" title="Bật/tắt giao diện tối">
+                <input id="darkToggle" type="checkbox">
+                <span class="switch"><span class="knob"></span></span><span>Dark</span>
+            </label>
+        </div>
+
+        <input type="hidden" th:if="${isEdit}" th:field="*{cateID}"/>
+
+        <h3 class="title" th:text="${isEdit} ? 'Sửa danh mục' : 'Tạo danh mục'">Tạo danh mục</h3>
+        <div class="subtitle" th:text="${isEdit} ? 'Cập nhật thông tin danh mục hiện có.' : 'Điền thông tin bên dưới để thêm danh mục mới.'">
+            Điền thông tin bên dưới để thêm danh mục mới.
+        </div>
+
+        <!-- fake progress on submit -->
+        <div class="progress mb-3" role="progressbar" aria-label="Đang xử lý" aria-valuemin="0" aria-valuemax="100" style="display:none">
+            <div class="progress-bar" id="pbar" style="width:0%"></div>
+        </div>
+
+        <form class="form-area"
+              th:action="${isEdit} ? @{'/categories/edit/' + *{cateID}} : @{/categories/create}"
+              method="post" id="catForm" novalidate>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label" for="cateName">Tên danh mục</label>
+                    <small class="text-muted counter"><span id="count">0</span>/50</small>
+                </div>
+                <input id="cateName" class="form-control" th:field="*{cateName}"
+                       placeholder="Ví dụ: TV, Máy ảnh, Tai nghe..." required maxlength="50" pattern=".{2,}" />
+                <div class="form-text">Tên nên ngắn gọn, dễ hiểu (tối đa 50 ký tự).</div>
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label" for="status">Trạng thái</label>
+                <select id="status" class="form-select" th:field="*{status}" required>
+                    <option value="">-- Chọn trạng thái --</option>
+                    <option value="Active">Hoạt động</option>
+                    <option value="Inactive">Không hoạt động</option>
+                </select>
+                <div class="form-text">Bạn có thể bật/tắt hiển thị danh mục này bất kỳ lúc nào.</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div class="text-muted small">⏱ Mẹo: nhấn <strong>Ctrl/⌘ + Enter</strong> để lưu nhanh.</div>
+                <div class="btns">
+                    <a class="btn btn-outline-dark btn-pill" th:href="@{/categories}">← Quay lại</a>
+                    <button type="submit" class="btn btn-primary btn-pill" id="submitBtn"
+                            th:text="${isEdit} ? 'Cập nhật' : 'Tạo mới'">Tạo mới</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+
+<!-- Footer fragment -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+
+    // Dark mode remember (scoped to page root class)
+    const pageRoot = document.body; // has class 'category-form-page'
+    const toggle = $('#darkToggle');
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark'){ pageRoot.classList.add('dark'); toggle.checked = true; }
+    toggle.addEventListener('change', () => {
+        pageRoot.classList.toggle('dark', toggle.checked);
+        localStorage.setItem('theme', toggle.checked ? 'dark' : 'light');
+    });
+
+    // Ripple hover position
+    $$('.btn-pill').forEach(btn=>{
+        btn.addEventListener('pointermove', e=>{
+            const r = btn.getBoundingClientRect();
+            btn.style.setProperty('--rx', (e.clientX - r.left) + 'px');
+            btn.style.setProperty('--ry', (e.clientY - r.top) + 'px');
+        });
+    });
+
+    const nameEl = $('#cateName');
+    const statusEl = $('#status');
+    const countEl = $('#count');
+
+    // Counter + load draft
+    function updateCount(){ countEl.textContent = (nameEl.value || '').length; }
+    const DRAFT_KEY = 'draft_category';
+    const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+    if (draft.cateName) nameEl.value = draft.cateName;
+    if (draft.status) statusEl.value = draft.status;
+    updateCount();
+
+    nameEl.addEventListener('input', () => { updateCount(); saveDraft(); });
+    statusEl.addEventListener('change', saveDraft);
+    function saveDraft(){ localStorage.setItem(DRAFT_KEY, JSON.stringify({ cateName: nameEl.value, status: statusEl.value })); }
+
+    // Ctrl/Cmd + Enter submit
+    document.addEventListener('keydown', (e)=>{
+        if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){ $('#submitBtn').click(); }
+    });
+
+    // Toast helper
+    function toast(msg, type='info'){
+        const wrap = document.getElementById('toasts');
+        const el = document.createElement('div');
+        el.className = 'toast-item';
+        el.textContent = msg;
+        if(type==='error'){ el.style.background = '#ef4444'; }
+        if(type==='ok'){ el.style.background = '#16a34a'; }
+        wrap.appendChild(el);
+        setTimeout(()=>{ el.style.opacity = '0'; el.style.transform='translateY(-6px)'; }, 2200);
+        setTimeout(()=> el.remove(), 2600);
+    }
+
+    // Validate + fake progress
+    const form = document.getElementById('catForm');
+    const progress = document.querySelector('.progress');
+    const bar = document.getElementById('pbar');
+
+    form.addEventListener('submit', (e)=>{
+        let ok = true;
+        [nameEl, statusEl].forEach(el=>{
+            el.classList.remove('invalid');
+            if(!el.value || (el === nameEl && el.value.trim().length < 2)){ el.classList.add('invalid'); ok = false; }
+        });
+        if(!ok){
+            e.preventDefault();
+            toast('Vui lòng kiểm tra lại các trường bắt buộc.', 'error');
+            return;
+        }
+        // progress visual
+        progress.style.display = 'block';
+        bar.style.width = '0%';
+        let p = 0;
+        const timer = setInterval(()=>{ p = Math.min(95, p + 7); bar.style.width = p + '%'; }, 100);
+
+        // clear draft on real submit
+        setTimeout(()=> localStorage.removeItem(DRAFT_KEY), 300);
+        // không e.preventDefault() -> submit thật
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
